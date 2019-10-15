@@ -1,4 +1,5 @@
-package SimpeServer
+// package main
+package SimpleServer
 
 import (
 	"log"
@@ -9,7 +10,6 @@ import (
 func AuthMiddleware(h http.Handler, comment string) http.Handler {
 	log.Println("Inflating AuthMiddleWare  for " + comment)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("AuthMiddleWare Invoked")
 		h.ServeHTTP(w, r)
 		// w.WriteHeader(400)
 	})
@@ -23,11 +23,13 @@ func ResourceHandler(muxer map[string]func(w http.ResponseWriter, r *http.Reques
 		wrappedIndex[method] = AuthMiddleware(http.HandlerFunc(fun), method)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("ResourceHandler Invoked")
+		log.Println("ResourceHandler Invoked for " + r.Method + " on " + comment)
 
 		switch r.Method {
 		case http.MethodGet:
 			wrappedIndex[http.MethodGet].ServeHTTP(w, r)
+		case http.MethodPost:
+			wrappedIndex[http.MethodPost].ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 
@@ -35,4 +37,30 @@ func ResourceHandler(muxer map[string]func(w http.ResponseWriter, r *http.Reques
 	})
 
 }
+
+func MakeMap() map[string]func(w http.ResponseWriter, r *http.Request) {
+	return make(map[string]func(w http.ResponseWriter, r *http.Request))
+}
+
+func GET(muxer map[string]func(w http.ResponseWriter, r *http.Request), f func(w http.ResponseWriter, r *http.Request)) map[string]func(w http.ResponseWriter, r *http.Request) {
+	muxer[http.MethodGet] = f
+	return muxer
+}
+
+func POST(muxer map[string]func(w http.ResponseWriter, r *http.Request), f func(w http.ResponseWriter, r *http.Request)) map[string]func(w http.ResponseWriter, r *http.Request) {
+	muxer[http.MethodPost] = f
+	return muxer
+}
+
+// func sample(w http.ResponseWriter, r *http.Request) {
+// 	w.WriteHeader(203)
+// }
+
+// func main() {
+// 	index := MakeMap()
+// 	index = GET(index, sample)
+// 	index = POST(index, sample)
+// 	http.Handle("/sample", ResourceHandler(index, "Sample Endpoint"))
+// 	http.ListenAndServe(":8092", nil)
+// }
 
