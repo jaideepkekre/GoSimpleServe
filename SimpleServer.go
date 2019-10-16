@@ -25,31 +25,26 @@ func authMiddleware(h http.Handler) http.Handler {
 	})
 }
 
-//Inflates the Function to HTTP verb map
+//Inflate the Resource handlers as mapped in EndPointMux
 func (epm EndPointMux) ResourceHandler() http.Handler {
 	log.Println("Inflating ResourceHandler")
 	wrappedIndex := make(map[string]http.Handler)
-
 	if epm.GET != nil {
 		log.Println("GETTER INFLATED")
 		wrappedIndex[http.MethodGet] = authMiddleware(http.HandlerFunc(epm.GET))
 	}
-
 	if epm.POST != nil {
 		log.Println("POSTER INFLATED")
 		wrappedIndex[http.MethodPost] = authMiddleware(http.HandlerFunc(epm.POST))
 	}
-
 	if epm.PUT != nil {
 		log.Println("PUTTER INFLATED")
 		wrappedIndex[http.MethodPut] = authMiddleware(http.HandlerFunc(epm.PUT))
 	}
-
 	if epm.PATCH != nil {
 		log.Println("PATCH INFLATED")
 		wrappedIndex[http.MethodPatch] = authMiddleware(http.HandlerFunc(epm.PATCH))
 	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("ResourceHandler Invoked for " + r.Method)
 
@@ -94,6 +89,9 @@ func (epm EndPointMux) ResourceHandler() http.Handler {
 
 }
 
+
+//Creates an HTTP endpoint for given string,
+// returns an EndPointMux object
 func CreateEndpoint(uri string) EndPointMux {
 	EPM := EndPointMux{URI:uri}
 	return EPM
